@@ -20,7 +20,16 @@ export default function TrackingPage() {
         <div className="max-w-7xl mx-auto px-4 py-8">
           <Card>
             <CardContent className="p-12 text-center">
-              <p className="text-gray-600">Donation not found</p>
+              <p className="text-gray-900 font-medium">Donation not found.</p>
+              <p className="text-gray-600 mt-2">It may have been removed from your current view, or you may have opened an invalid tracking link.</p>
+              <div className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+                <Button onClick={() => navigate('/donor-dashboard')} className="bg-green-600 hover:bg-green-700 text-white">
+                  Back To Dashboard
+                </Button>
+                <Button onClick={() => navigate('/active-donations')} variant="outline">
+                  View Active Donations
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -28,34 +37,39 @@ export default function TrackingPage() {
     );
   }
 
+  const eventMap = new Map(post.history.map((item) => [item.status, item]));
   const timeline = [
     {
       status: 'posted',
       label: 'Posted',
-      time: new Date(post.cookedTime).toLocaleString(),
+      time: eventMap.get('posted')?.note || new Date(post.cookedTime).toLocaleString(),
       icon: Package,
       completed: true,
+      at: eventMap.get('posted')?.at || post.cookedTime,
     },
     {
       status: 'accepted',
       label: 'Accepted',
-      time: post.acceptedBy ? `Accepted by ${post.acceptedBy}` : 'Waiting for NGO response',
+      time: eventMap.get('accepted')?.note || 'Waiting for NGO response',
       icon: CheckCircle,
       completed: post.status !== 'pending',
+      at: eventMap.get('accepted')?.at,
     },
     {
       status: 'pickedup',
       label: 'Picked Up',
-      time: post.volunteerId ? 'Volunteer assigned and en route' : 'Awaiting pickup',
+      time: eventMap.get('pickedup')?.note || 'Awaiting pickup',
       icon: Truck,
       completed: post.status === 'pickedup' || post.status === 'delivered',
+      at: eventMap.get('pickedup')?.at,
     },
     {
       status: 'delivered',
       label: 'Delivered',
-      time: post.status === 'delivered' ? 'Completed' : 'In progress',
+      time: eventMap.get('delivered')?.note || 'In progress',
       icon: CheckCircle,
       completed: post.status === 'delivered',
+      at: eventMap.get('delivered')?.at,
     },
   ];
 
@@ -64,12 +78,12 @@ export default function TrackingPage() {
       <TopNav />
 
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Donation Tracking</h1>
             <p className="text-gray-600">Track the status of your food donation</p>
           </div>
-          <Button onClick={() => navigate(-1)} variant="outline">
+          <Button onClick={() => navigate(-1)} variant="outline" className="w-full sm:w-auto">
             Back
           </Button>
         </div>
@@ -82,7 +96,7 @@ export default function TrackingPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <div className="text-sm text-gray-600">Type</div>
                 <div className="font-semibold">{post.isVeg ? 'Veg' : 'Non-Veg'}</div>
@@ -101,6 +115,14 @@ export default function TrackingPage() {
                   <CountdownTimer targetTime={post.safeUntil} />
                 </div>
               </div>
+            </div>
+            <div className="mt-4 flex flex-col sm:flex-row gap-3">
+              <Button onClick={() => navigate('/donor-dashboard')} variant="outline" className="w-full sm:w-auto">
+                Back To My Donations
+              </Button>
+              <Button onClick={() => navigate('/map')} variant="outline" className="w-full sm:w-auto">
+                Open Map View
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -128,6 +150,9 @@ export default function TrackingPage() {
                   <div className="flex-1 pt-2">
                     <div className="font-semibold text-gray-900 mb-1">{item.label}</div>
                     <div className="text-sm text-gray-600">{item.time}</div>
+                    {item.at && (
+                      <div className="text-xs text-gray-500 mt-1">{new Date(item.at).toLocaleString()}</div>
+                    )}
                   </div>
 
                   <div className="pt-2">

@@ -17,12 +17,10 @@ import { useAppState } from '../state/AppState';
 export default function DonorDashboardPage() {
   const navigate = useNavigate();
   const [filterCategory, setFilterCategory] = useState<string>('all');
-  const { donations, profile } = useAppState();
+  const { donations } = useAppState();
 
-  const donorLabel = profile.organization || `${profile.firstName} ${profile.lastName}`.trim();
   const filteredPosts = donations.filter((post) => {
-    const matchesCategory = filterCategory === 'all' || post.category === filterCategory;
-    return matchesCategory && post.donorName === donorLabel;
+    return filterCategory === 'all' || post.category === filterCategory;
   });
 
   const getStatusColor = (status: string) => {
@@ -45,14 +43,14 @@ export default function DonorDashboardPage() {
       <TopNav />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Donor Dashboard</h1>
             <p className="text-gray-600">Manage your food donations and track their status</p>
           </div>
           <Button
             onClick={() => navigate('/post-food')}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
             size="lg"
           >
             <Plus className="w-5 h-5 mr-2" />
@@ -62,11 +60,11 @@ export default function DonorDashboardPage() {
 
         <Card className="mb-6">
           <CardContent className="p-4">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <Filter className="w-5 h-5 text-gray-600" />
               <span className="font-medium text-gray-700">Filter by Category:</span>
               <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -84,9 +82,9 @@ export default function DonorDashboardPage() {
           {filteredPosts.map((post) => (
             <Card key={post.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-3">
+                    <div className="flex items-center gap-4 mb-3 flex-wrap">
                       <h3 className="text-xl font-semibold text-gray-900">{post.foodName}</h3>
                       <CategoryBadge category={post.category} />
                       <span
@@ -119,7 +117,7 @@ export default function DonorDashboardPage() {
                       </div>
                     )}
                   </div>
-                  <Button onClick={() => navigate(`/tracking/${post.id}`)} variant="outline">
+                  <Button onClick={() => navigate(`/tracking/${post.id}`)} variant="outline" className="w-full md:w-auto">
                     Track
                   </Button>
                 </div>
@@ -130,8 +128,12 @@ export default function DonorDashboardPage() {
 
         {filteredPosts.length === 0 && (
           <Card>
-            <CardContent className="p-12 text-center text-gray-600">
-              Your donations will appear here after you post food.
+            <CardContent className="p-12 text-center">
+              <p className="text-gray-900 font-medium">No donations match this view yet.</p>
+              <p className="text-gray-600 mt-2">Post your first donation or switch the category filter to see more items.</p>
+              <Button onClick={() => navigate('/post-food')} className="mt-4 bg-green-600 hover:bg-green-700 text-white">
+                Post Surplus Food
+              </Button>
             </CardContent>
           </Card>
         )}

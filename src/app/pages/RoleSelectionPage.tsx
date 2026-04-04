@@ -7,7 +7,7 @@ import { useAppState } from '../state/AppState';
 
 export default function RoleSelectionPage() {
   const navigate = useNavigate();
-  const { setCurrentRole } = useAppState();
+  const { currentRole } = useAppState();
 
   const roles = [
     {
@@ -39,21 +39,26 @@ export default function RoleSelectionPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <TopNav />
-      
+
       <div className="max-w-5xl mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Select Your Role</h1>
-          <p className="text-lg text-gray-600">Choose how you'd like to help fight food waste</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Workspace Access</h1>
+          <p className="text-lg text-gray-600">Your account role controls which operational workspace you can open.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {roles.map((role) => (
             <Card
               key={role.title}
-              className="hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 hover:border-green-400"
+              className={`transition-all duration-300 border-2 ${
+                currentRole === role.role
+                  ? 'border-green-500 shadow-2xl'
+                  : 'border-gray-200 opacity-70'
+              }`}
               onClick={() => {
-                setCurrentRole(role.role);
-                navigate(role.path);
+                if (currentRole === role.role) {
+                  navigate(role.path);
+                }
               }}
             >
               <CardHeader className="text-center pb-4">
@@ -65,15 +70,17 @@ export default function RoleSelectionPage() {
               </CardHeader>
               <CardContent className="text-center">
                 <Button
-                  className={`w-full ${role.color} text-white`}
+                  className={`w-full ${currentRole === role.role ? role.color : 'bg-gray-300 text-gray-700 hover:bg-gray-300'}`}
                   size="lg"
+                  disabled={currentRole !== role.role}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setCurrentRole(role.role);
-                    navigate(role.path);
+                    if (currentRole === role.role) {
+                      navigate(role.path);
+                    }
                   }}
                 >
-                  Get Started
+                  {currentRole === role.role ? 'Open Workspace' : 'Use Matching Account'}
                 </Button>
               </CardContent>
             </Card>

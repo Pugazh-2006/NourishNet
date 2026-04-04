@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Mail, MapPin, Phone, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { TopNav } from '../components/TopNav';
@@ -12,10 +12,18 @@ export default function ProfilePage() {
   const { profile, donations, saveProfile } = useAppState();
   const [formData, setFormData] = useState(profile);
 
-  const handleSave = (e: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    setFormData(profile);
+  }, [profile]);
+
+  const handleSave = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    saveProfile(formData);
-    toast.success('Profile updated successfully.');
+    try {
+      await saveProfile(formData);
+      toast.success('Profile updated successfully.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to save profile');
+    }
   };
 
   const fullName = `${formData.firstName} ${formData.lastName}`.trim();
@@ -92,12 +100,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
+                  <Input id="email" type="email" value={formData.email} disabled />
                 </div>
                 <div>
                   <Label htmlFor="phone">Phone</Label>

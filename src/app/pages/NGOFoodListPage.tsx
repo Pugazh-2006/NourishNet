@@ -18,7 +18,7 @@ import { useAppState } from '../state/AppState';
 export default function NGOFoodListPage() {
   const [sortBy, setSortBy] = useState('nearest');
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
-  const { donations, profile, acceptDonation } = useAppState();
+  const { donations, acceptDonation, profile, isLoading } = useAppState();
 
   const pendingPosts = useMemo(
     () =>
@@ -37,11 +37,20 @@ export default function NGOFoodListPage() {
     return priority[b.category] - priority[a.category];
   });
 
-  const ngoName = profile.organization || 'Hope Foundation';
+  const ngoName = profile.organization || 'Your NGO';
 
-  const handleAccept = (postId: string) => {
-    acceptDonation(postId, ngoName);
-    toast.success('Food accepted and assigned for volunteer pickup.');
+  const handleAccept = async (postId: string, foodName: string) => {
+    const confirmed = window.confirm(`Accept \"${foodName}\" and assign it into the volunteer workflow?`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await acceptDonation(postId);
+      toast.success('Food accepted and assigned for volunteer pickup.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to accept donation');
+    }
   };
 
   const handleDecline = (postId: string) => {
@@ -56,7 +65,7 @@ export default function NGOFoodListPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Nearby Food Donations</h1>
-          <p className="text-gray-600">Accept food donations from nearby donors</p>
+          <p className="text-gray-600">Accept food donations from nearby donors as {ngoName}</p>
         </div>
 
         <Card className="mb-6">
@@ -77,65 +86,87 @@ export default function NGOFoodListPage() {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {sortedPosts.map((post) => (
-            <Card key={post.id} className="hover:shadow-xl transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{post.foodName}</h3>
-                    <CategoryBadge category={post.category} />
-                  </div>
-                  <CountdownTimer targetTime={post.safeUntil} />
-                </div>
+          {sortedPosts.map((post) => {
+            const isExpired = new Date(post.safeUntil).getTime() <= Date.now();
 
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    {post.isVeg ? (
-                      <Leaf className="w-4 h-4 text-green-600" />
-                    ) : (
-                      <Drumstick className="w-4 h-4 text-red-600" />
+            return (
+              <Card key={post.id} className="hover:shadow-xl transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4 gap-4">
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{post.foodName}</h3>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <CategoryBadge category={post.category} />
+                        {isExpired && (
+                          <span className="px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-700">Expired</span>
+                        )}
+                      </div>
+                    </div>
+                    <CountdownTimer targetTime={post.safeUntil} />
+                  </div>
+
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      {post.isVeg ? (
+                        <Leaf className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Drumstick className="w-4 h-4 text-red-600" />
+                      )}
+                      <span>{post.isVeg ? 'Vegetarian' : 'Non-Vegetarian'}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <MapPin className="w-4 h-4" />
+                      <span>
+                        {post.location} - {post.distance} km away
+                      </span>
+                    </div>
+
+                    <div className="text-gray-600">
+                      <span className="font-medium">Quantity:</span> {post.quantity}
+                    </div>
+
+                    <div className="text-gray-600">
+                      <span className="font-medium">Donor:</span> {post.donorName}
+                    </div>
+
+                    {post.volunteerName && (
+                      <div className="text-gray-600">
+                        <span className="font-medium">Volunteer:</span> {post.volunteerName}
+                      </div>
                     )}
-                    <span>{post.isVeg ? 'Vegetarian' : 'Non-Vegetarian'}</span>
+
+                    <div className="text-gray-600">
+                      <span className="font-medium">Cooked:</span>{' '}
+                      {new Date(post.cookedTime).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </div>
+
+                    {isExpired && (
+                      <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                        This donation has passed its safe handling window and cannot be accepted.
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <MapPin className="w-4 h-4" />
-                    <span>
-                      {post.location} - {post.distance} km away
-                    </span>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => void handleAccept(post.id, post.foodName)}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                      disabled={isLoading || isExpired}
+                    >
+                      {isExpired ? 'Expired' : isLoading ? 'Accepting...' : 'Accept'}
+                    </Button>
+                    <Button onClick={() => handleDecline(post.id)} variant="outline" className="flex-1" disabled={isLoading}>
+                      Decline
+                    </Button>
                   </div>
-
-                  <div className="text-gray-600">
-                    <span className="font-medium">Quantity:</span> {post.quantity}
-                  </div>
-
-                  <div className="text-gray-600">
-                    <span className="font-medium">Donor:</span> {post.donorName}
-                  </div>
-
-                  <div className="text-gray-600">
-                    <span className="font-medium">Cooked:</span>{' '}
-                    {new Date(post.cookedTime).toLocaleTimeString('en-US', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <Button
-                    onClick={() => handleAccept(post.id)}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    Accept
-                  </Button>
-                  <Button onClick={() => handleDecline(post.id)} variant="outline" className="flex-1">
-                    Decline
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {sortedPosts.length === 0 && (
