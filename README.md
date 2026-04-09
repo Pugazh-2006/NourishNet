@@ -11,18 +11,18 @@ This repository now includes:
 - A Vite + React frontend
 - A lightweight local Node API in `server/index.mjs`
 - A real local SQLite database in `server/nourishnet.db`
-- Role-aware login for donor, NGO, and volunteer demo accounts
+- Role-aware login + signup for donor, NGO, and volunteer accounts
 
 Current limitations:
 
 - No production-hosted database yet
-- No advanced auth provider yet
+- Password reset via email/token is deferred (in-session password change is available)
 - No real map provider or navigation integration yet
 - The SQLite backend uses Node's built-in SQLite support for local development
 
 ## Features
 
-- Role-based sign-in for donor, NGO, and volunteer flows
+- Role-based sign-in and self-signup for donor, NGO, and volunteer flows
 - Donor dashboard with posted donation tracking
 - Food posting form with category and timing details
 - NGO donation acceptance flow with volunteer assignment
@@ -52,11 +52,10 @@ src/
     lib/          frontend API helpers
     pages/        route screens
     state/        app-wide authenticated state
-    types.ts      shared frontend types
-    App.tsx       app root
-    routes.tsx    client-side routing
+    App.js        app root
+    routes.js     client-side routing
   styles/         global styles
-  main.tsx        app entry point
+  main.jsx         app entry point
 server/
   index.mjs       lightweight API server + SQLite schema initialization
   nourishnet.db   local SQLite database file created on first run
@@ -116,10 +115,10 @@ Preview the production build locally:
 npm run preview
 ```
 
-Run TypeScript project checks:
+Run automated tests:
 
 ```bash
-npm run typecheck
+npm run test
 ```
 
 Run the current test command:
@@ -142,6 +141,21 @@ The repo now includes `.env.example` with the supported local configuration valu
 - `NOMINATIM_URL`
 - `GEOCODER_APP_NAME`
 - `GEOCODER_REFERER`
+- `GEOCODER_TIMEOUT_MS`
+- `ROUTING_API_URL`
+- `ROUTING_TIMEOUT_MS`
+- `FALLBACK_SPEED_KMH`
+- `PASSWORD_SCRYPT_N`
+- `PASSWORD_SCRYPT_R`
+- `PASSWORD_SCRYPT_P`
+- `PASSWORD_SCRYPT_KEYLEN`
+- `SESSION_TTL_HOURS`
+- `SESSION_MAX_LIFETIME_HOURS`
+- `SESSION_IDLE_EXTENSION_MINUTES`
+- `LOGIN_MAX_ATTEMPTS`
+- `LOGIN_WINDOW_MINUTES`
+- `LOGIN_LOCK_MINUTES`
+- `DB_PATH` (optional override for SQLite path, useful for isolated test runs)
 
 Future map-provider keys can also be added there when you move beyond the current OpenStreetMap setup.
 
@@ -155,9 +169,9 @@ Use these seeded accounts to test the shared workflow:
 
 ## Current Behavior
 
-- Users sign in as donor, NGO, or volunteer
+- Users can sign in as donor, NGO, or volunteer, or create new accounts directly from `/login`
 - Donations and workflow updates are shared through the local API
-- Profile changes update the shared database
+- Profile changes and password updates are persisted in the shared database
 - Different browser tabs or devices on the same local server can see the same data
 - The SQLite database is created and seeded automatically when the server starts for the first time
 
@@ -170,3 +184,5 @@ Use these seeded accounts to test the shared workflow:
 ## Origin
 
 The initial UI came from a Figma-generated code bundle and was adapted into this project structure.
+
+

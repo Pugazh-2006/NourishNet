@@ -1,181 +1,183 @@
 # NourishNet Action Plan
 
-This plan turns the current prototype into a usable, maintainable application.
+This plan is intentionally forward-looking. Completed items were removed so this file stays focused on upcoming execution.
 
-## Current Status
+## Planning Date
 
-- The frontend builds successfully.
-- The app now has a shared local backend and a real local SQLite database.
-- Donor, NGO, and volunteer users can sign in and work against shared data.
-- The biggest remaining gaps are map/routing polish, analytics quality, workflow hardening, and engineering cleanup.
+- April 9, 2026
+
+## Current Baseline (Reanalyzed)
+
+- Core donor -> NGO -> volunteer workflow is functional with shared local state via API + SQLite.
+- Route-level code splitting and reduced UI/dependency weight are in place.
+- Test stack exists (Vitest + Testing Library) with baseline unit/integration/smoke/happy-path tests.
+- Biggest remaining gaps are production readiness (auth, data, deployment), operational reliability, and deeper test depth.
 
 ## Status Legend
 
-- `[Done]` finished
-- `[In Progress]` partially implemented, but still needs follow-up
-- `[Pending]` not started yet
+- `[In Progress]` active now
+- `[Pending]` queued next
+- `[Blocked]` needs external decision or dependency
 
-## Priority Order
+## Priority Roadmap
 
-## Phase 1: Make Core Workflow Actually Usable
+## Phase 1: Reliability And Workflow Accuracy
 
-Goal: turn the donor -> NGO -> volunteer flow into a reliable product flow instead of a single-browser demo.
+Goal: make the existing flow consistently correct under real usage conditions.
 
-### 1. [Done] Add a real backend and database
-
-Completed:
-- Added a real local backend in `server/index.mjs`.
-- Replaced browser-only state as the source of truth.
-- Added a real local SQLite database in `server/nourishnet.db`.
-- Added shared persistence for users, donations, NGOs, sessions, and donation history.
-- Added API endpoints for login, bootstrap, profile update, create donation, accept donation, and update delivery status.
-- Seeded development/demo accounts on first server start.
-
-Remaining later:
-- Replace local SQLite with a hosted production database when moving beyond local development.
-
-### 2. [Done] Add authentication and role-based access
-
-Completed:
-- Added login flow with donor, NGO, and volunteer demo accounts.
-- Added authenticated session handling.
-- Moved role identity from local UI state to authenticated backend user data.
-- Added route protection for donor, NGO, volunteer, and authenticated pages.
-- Connected profile editing to the authenticated user.
-
-Remaining later:
-- Add signup.
-- Add stronger auth/security for production use.
-
-### 3. [Done] Fix volunteer assignment flow
-
-Completed:
-- Replaced single hidden pickup lookup with assigned pickup list behavior.
-- Volunteers now see multiple assigned pickups.
-- Status updates are stored in backend history.
-- Removed the old hardcoded local-only workflow logic.
-
-Remaining later:
-- Add a dedicated pickup detail route if you want a fuller operations workflow.
-- Add smarter volunteer assignment rules instead of first available volunteer.
-
-## Phase 2: Replace Mocked Behavior
-
-Goal: remove features that look real but are still simulated.
-
-### 4. [In Progress] Replace mock map behavior
-
-Completed:
-- Replaced the fake SVG map with a real Leaflet + OpenStreetMap map.
-- Added backend-stored pickup coordinates for donations.
-- Added automatic server-side geocoding for newly entered addresses with cache + fallback behavior.
-- Rendered real donor and NGO markers plus radius overlays.
-- Enabled working external map links for volunteer pickup and NGO navigation.
-
-Remaining:
-- Verify live geocoding end-to-end in a non-sandboxed run.
-- Calculate route-based travel more accurately if needed.
-- Upgrade to a stronger map provider later if advanced routing is needed.
-
-Done when:
-- Donations and NGOs display at real map locations.
-- Volunteers can open turn-by-turn navigation from the app.
-
-### 5. [Done] Replace fake analytics with real metrics
-
-Completed:
-- Donation history and workflow timestamps are now stored in the backend.
-- Pickup timing is now derived from real accepted and picked-up events.
-- Added platform-wide analytics summaries from the backend instead of inventing totals in the frontend.
-- Replaced fake food and meal estimates with structured parsing from quantity entries such as servings, kg, and grams.
-- Separated platform metrics from per-user impact metrics in the analytics experience.
-- Added clearer low-data states when structured meal or weight data is not available yet.
-
-Done when:
-- Dashboard and analytics values are derived from real recorded actions.
-
-## Phase 3: Product and UX Hardening
-
-Goal: make the app safer and clearer for real usage.
-
-### 6. [Done] Improve validation and workflow safety
-
-Completed:
-- Added structured quantity validation in both the donor form and the backend API.
-- Prevented creation of already-expired donations and blocked future cooked times.
-- Prevented NGOs from accepting expired donations and blocked expired pickups from continuing.
-- Kept backend status-transition rules enforced for volunteer updates.
-- Added clearer loading, disabled, and expired states across donor, NGO, and volunteer actions.
-- Added confirmation prompts before NGO accept, volunteer pickup, and volunteer delivery actions.
-
-Done when:
-- Users cannot accidentally create invalid or impossible workflow states.
-
-### 7. [Done] Improve page structure and navigation
-
-Completed:
-- Added route guards for authenticated pages.
-- Made role access clearer through authenticated workspaces.
-- Improved volunteer flow by supporting multiple assigned pickups.
-- Added role-aware workspace navigation in the top nav.
-- Added clearer workflow guidance and next-step actions on the home dashboard.
-- Improved empty and recovery states for notifications, donor dashboard, and tracking pages.
-- Tightened mobile layout and button sizing on core donor and tracking screens.
-
-Done when:
-- A new user can complete the core flow without confusion.
-
-## Phase 4: Engineering Cleanup
-
-Goal: make the project easier to run, maintain, and extend.
-
-### 8. [Done] Clean up project configuration
-
-Completed:
-- Added a backend run script.
-- Updated the README to document the backend/database setup.
-- Added `tsconfig.json` and a working `typecheck` script.
-- Added predictable `preview`, `lint`, and `test` scripts to `package.json`.
-- Added `.env.example` plus env-based Vite and server configuration for local API and geocoder settings.
-- Renamed the package from the Figma-generated default to `nourishnet`.
-- Moved `react` and `react-dom` into normal dependencies for a cleaner fresh install.
-
-Done when:
-- A fresh clone has a predictable setup and developer workflow.
-
-### 9. [Pending] Reduce bundle size and remove unused UI weight
+### 1. [In Progress] Complete map and routing realism
 
 Tasks:
-- Audit large dependencies imported from the Figma export.
-- Remove unused generated UI components.
-- Code-split heavy pages and charts.
-- Rebuild and compare bundle size after cleanup.
+- Validate live geocoding behavior end-to-end with real network access and capture fallback frequency.
+- Replace random `distance` assignment with deterministic distance estimation.
+- Add optional route-aware ETA calculation for pickup and delivery paths.
+- Add map/provider error states for rate-limit, timeout, and no-result scenarios.
 
 Done when:
-- Build warnings are reduced and initial load is lighter.
+- Newly created donations consistently resolve coordinates.
+- Distance/ETA values are reproducible and no longer synthetic.
+- Users see actionable messaging when map/geocoding services fail.
 
-### 10. [Pending] Add test coverage
+### 2. [Pending] Harden workflow invariants across backend + UI
 
 Tasks:
-- Add unit tests for app state and workflow rules.
-- Add integration tests for donor, NGO, and volunteer flows.
-- Add smoke tests for routing and page rendering.
-- Add one end-to-end happy path for full donation lifecycle.
+- Add server-side idempotency protection for accept/pickup/deliver endpoints.
+- Prevent duplicate submissions from rapid repeat clicks and browser retries.
+- Add explicit stale-state handling when two actors act on the same donation concurrently.
+- Normalize error response shapes for all workflow endpoints.
 
 Done when:
-- Core workflow regressions are caught automatically.
+- Concurrent or repeated actions cannot create invalid state transitions.
+- Frontend displays clear conflict feedback and recovers safely.
 
-## Remaining High-Priority Work
+## Phase 2: Security And Identity
 
-1. Verify live geocoding end-to-end outside the sandbox and refine it if needed.
-2. Add tests for the core donation lifecycle.
-3. Reduce bundle size and remove unused UI weight.
-4. Add signup and stronger production auth when moving beyond local demo use.
-5. Add a hosted production database path when moving beyond local development.
+Goal: move from local-demo auth to safer production-ready foundations.
 
+### 3. [Done] Strengthen authentication and session security
 
+Completed:
+- Replaced legacy SHA-256 password handling with salted `scrypt` password hashes for new credentials.
+- Added legacy-password compatibility and automatic on-login rehash migration to avoid breaking existing local users.
+- Added session expiry and lifecycle controls:
+  - TTL-based expiry
+  - max session lifetime cap
+  - rolling `lastUsedAt` updates with bounded extension
+  - login-time session rotation and prior-session invalidation
+  - explicit logout token invalidation
+- Added brute-force protections on login:
+  - per-IP+email attempt tracking window
+  - lockout after repeated failures
+  - `Retry-After` support on lock responses
+- Added role/permission audit guardrails for mutating workflow endpoints and enforced centralized role checks.
 
+Done when:
+- Credentials and session handling follow modern security expectations.
+- Common abuse paths (credential stuffing, brute force, stale token reuse) are mitigated.
 
+### 4. [Done] Add signup and account lifecycle management
 
+Completed:
+- Implemented `POST /api/auth/signup` with role/email/password validation, duplicate-email protection, and immediate session issuance.
+- Implemented `POST /api/auth/change-password` with current-password verification, password policy checks, and full session invalidation after update.
+- Added role-aware profile completeness rules and enforced them in both signup and `PATCH /api/me`.
+- Added backend + frontend onboarding coverage:
+  - backend API tests against a temporary SQLite test DB (`server/account-lifecycle.test.mjs`)
+  - frontend AppState integration tests for signup + password change (`src/app/state/AppState.integration.test.jsx`)
+  - frontend API client tests for account lifecycle error handling (`src/app/lib/api.account-lifecycle.test.js`)
+- Password reset flow is explicitly deferred and documented in the login/profile UX until reset-token/email infrastructure is added.
 
+Done when:
+- New users can self-onboard without manual DB seeding.
+- Account lifecycle flows are test-covered and role-safe.
+
+## Phase 3: Data And Deployment Readiness
+
+Goal: prepare for multi-user hosted environments beyond local development.
+
+### 5. [Pending] Introduce migration-safe data layer
+
+Tasks:
+- Add schema migration strategy instead of startup-only schema mutation.
+- Add environment-aware DB configuration (local vs hosted).
+- Add backup/restore path and seed strategy separation for dev/test/prod.
+- Define data retention policy for sessions/history records.
+
+Done when:
+- Schema changes are versioned and repeatable.
+- Environment setup is predictable without manual DB intervention.
+
+### 6. [Blocked] Choose production hosting architecture
+
+Tasks:
+- Decide backend hosting target and production database provider.
+- Define secrets/config management for deployed environments.
+- Add deployment checklist for frontend, API, and database.
+- Validate CORS, base URLs, and proxy behavior in deployed setup.
+
+Done when:
+- A single documented deployment path exists and is reproducible.
+- App can run outside local machine with shared persistent data.
+
+## Phase 4: Testing And Quality Gates
+
+Goal: turn current test baseline into strong regression protection.
+
+### 7. [In Progress] Expand automated coverage depth
+
+Tasks:
+- Add backend API tests for auth and workflow endpoints against a test DB.
+- Add integration tests for map/geocoding failure and fallback branches.
+- Add negative-path tests for validation and permission failures.
+- Add coverage reporting and minimum threshold enforcement.
+
+Done when:
+- Critical backend/frontend paths include both happy and failure cases.
+- CI fails automatically when coverage or critical tests regress.
+
+### 8. [Pending] Add CI quality pipeline
+
+Tasks:
+- Add CI workflow for `npm ci`, `test`, and `build`.
+- Enforce branch protection checks on test/build success.
+- Add lint rule set (or document why test/build-only checks are sufficient).
+- Publish artifacts/test reports for failed CI runs.
+
+Done when:
+- Every PR is automatically validated before merge.
+- Regressions are caught before manual QA.
+
+## Phase 5: Product UX And Operations
+
+Goal: improve day-2 usability and maintainability.
+
+### 9. [Pending] Improve operational transparency in UI
+
+Tasks:
+- Add explicit loading/empty/error states on all major pages.
+- Add timestamp/source metadata for analytics and map-derived values.
+- Add clearer role-specific dashboard cues for next action.
+- Add user-visible audit context for important status changes.
+
+Done when:
+- Users can understand system state without guessing.
+- Failures and delays are visible and actionable in the UI.
+
+### 10. [Pending] Add observability and diagnostics
+
+Tasks:
+- Add structured server logging with request IDs.
+- Add centralized error handling middleware in API.
+- Add lightweight health/readiness endpoint.
+- Add debug toggles for geocoding and workflow transitions in non-prod.
+
+Done when:
+- Production issues can be traced from logs quickly.
+- Basic runtime health can be monitored externally.
+
+## Immediate Next Sprint (Recommended)
+
+1. Complete item 1 (map/geocoding realism) and item 2 (workflow idempotency/concurrency).
+2. Start item 7 with backend API tests for auth + donation transitions.
+3. Land CI pipeline from item 8 to enforce test/build gates.
 
